@@ -1,0 +1,34 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+jupyter = "*"
+tensorflow = {version = "<1.13.0"}
+keras = {extras = ["visualize"]}
+pillow = "*"
+yapf = "*"
+pynrrd = "*"
+matplotlib = "*"
+pandas = "*"
+scikit-image = "*"
+numpy = "*"
+webcolors = "*"
+simpleitk = "*"
+flask-sqlalchemy = "*"
+flask-migrate = "*"
+flask = "*"
+seaborn = "*"
+scipy = "*"
+keras-vis = "*"
+papermill = "*"
+tensorflow-gpu = {version = "<1.13.0"}
+sklearn = "*"
+tqdm = "*"
+ipython = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"

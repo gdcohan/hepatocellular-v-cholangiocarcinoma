@@ -1,0 +1,17 @@
+.DS_Store
+.ipynb_checkpoints/
+__pycache__/
+
+data
+scratch.ipynb
+*.h5
+*.whl
+
+*.csv
+*.txt
+
+migrations/
+features/
+output/
+
+pushover-secret.sh
