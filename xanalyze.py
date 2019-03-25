@@ -1,6 +1,7 @@
 from config import config
-from db import db, Xresult, Calculatedresult
+from db import db, XResult, CalculatedResult
 from sqlalchemy.sql import func
+from sqlalchemy.sql import exists
 import json
 import sys
 import evaluate
@@ -15,12 +16,12 @@ def analyze_averages(parameters, description, model, input_form, split):
         json_hyperparameter = json.dumps(hyperparameter)
 
         # AVERAGE TESTING and HOLDOUT results across ALL trials
-        averaged_test_f1 = db.session.query(func.avg(Xresult.holdout_f1_result)).filter(Xresult.description == description, Xresult.hyperparameters == json_hyperparameter, Xresult.input_form == input_form).scalar()
-        averaged_test_accuracy = db.session.query(func.avg(Xresult.holdout_test_accuracy)).filter(Xresult.description == description, Xresult.hyperparameters == json_hyperparameter, Xresult.input_form == input_form).scalar()
-        averaged_test_loss = db.session.query(func.avg(Xresult.holdout_test_loss)).filter(Xresult.description == description, Xresult.hyperparameters == json_hyperparameter, Xresult.input_form == input_form).scalar()
-        averaged_holdout_f1 = db.session.query(func.avg(Xresult.holdout_f1_result)).filter(Xresult.description == description, Xresult.hyperparameters == json_hyperparameter, Xresult.input_form == input_form).scalar()
-        averaged_holdout_accuracy = db.session.query(func.avg(Xresult.holdout_test_accuracy)).filter(Xresult.description == description, Xresult.hyperparameters == json_hyperparameter, Xresult.input_form == input_form).scalar()
-        averaged_holdout_loss = db.session.query(func.avg(Xresult.holdout_test_loss)).filter(Xresult.description == description, Xresult.hyperparameters == json_hyperparameter, Xresult.input_form == input_form).scalar()
+        averaged_test_f1 = db.session.query(func.avg(XResult.holdout_f1_result)).filter(XResult.description == description, XResult.hyperparameters == json_hyperparameter, XResult.input_form == input_form).scalar()
+        averaged_test_accuracy = db.session.query(func.avg(XResult.holdout_test_accuracy)).filter(XResult.description == description, XResult.hyperparameters == json_hyperparameter, XResult.input_form == input_form).scalar()
+        averaged_test_loss = db.session.query(func.avg(XResult.holdout_test_loss)).filter(XResult.description == description, XResult.hyperparameters == json_hyperparameter, XResult.input_form == input_form).scalar()
+        averaged_holdout_f1 = db.session.query(func.avg(XResult.holdout_f1_result)).filter(XResult.description == description, XResult.hyperparameters == json_hyperparameter, XResult.input_form == input_form).scalar()
+        averaged_holdout_accuracy = db.session.query(func.avg(XResult.holdout_test_accuracy)).filter(XResult.description == description, XResult.hyperparameters == json_hyperparameter, XResult.input_form == input_form).scalar()
+        averaged_holdout_loss = db.session.query(func.avg(XResult.holdout_test_loss)).filter(XResult.description == description, XResult.hyperparameters == json_hyperparameter, XResult.input_form == input_form).scalar()
 
         # Ensembling the k-fold models by minimum loss
         min_loss_f1, min_loss_accuracy, min_loss_test_acc, min_loss_test_loss = ensemble_folds(json_hyperparameter, description, "min", input_form)
@@ -28,7 +29,7 @@ def analyze_averages(parameters, description, model, input_form, split):
         max_acc_f1, max_acc_accuracy, max_acc_test_acc, max_acc_test_loss = ensemble_folds(json_hyperparameter, description, "min", input_form)
 
         # save it all
-        result = Calculatedresult(
+        result = CalculatedResult(
             str(split),
             model,
             min_loss_f1,
@@ -62,28 +63,28 @@ def ensemble_folds(json_hyperparameter, description, mode, input_form):
 
     if mode == "min":
         for x in range(config.NUMBER_OF_FOLDS - 1):
-            subquery = db.session.query(func.min(Xresult.test_loss)).filter(Xresult.description == description,
-                                                                            Xresult.hyperparameters == json_hyperparameter,
-                                                                            Xresult.input_form == input_form,
-                                                                            Xresult.fold == x + 1)
-            model_with_least_loss = db.session.query(Xresult).filter(Xresult.description == description,
-                                                                     Xresult.hyperparameters == json_hyperparameter,
-                                                                     Xresult.input_form == input_form,
-                                                                     Xresult.fold == x + 1,
-                                                                     Xresult.test_loss == subquery).first()
+            subquery = db.session.query(func.min(XResult.test_loss)).filter(XResult.description == description,
+                                                                            XResult.hyperparameters == json_hyperparameter,
+                                                                            XResult.input_form == input_form,
+                                                                            XResult.fold == x + 1)
+            model_with_least_loss = db.session.query(XResult).filter(XResult.description == description,
+                                                                     XResult.hyperparameters == json_hyperparameter,
+                                                                     XResult.input_form == input_form,
+                                                                     XResult.fold == x + 1,
+                                                                     XResult.test_loss == subquery).first()
             least_loss_list.append(model_with_least_loss)
 
     if mode == "max":
         for x in range(config.NUMBER_OF_FOLDS - 1):
-            subquery = db.session.query(func.max(Xresult.test_accuracy)).filter(Xresult.description == description,
-                                                                                Xresult.hyperparameters == json_hyperparameter,
-                                                                                Xresult.input_form == input_form,
-                                                                                Xresult.fold == x + 1)
-            model_with_most_accuracy = db.session.query(Xresult).filter(Xresult.description == description,
-                                                                        Xresult.hyperparameters == json_hyperparameter,
-                                                                        Xresult.input_form == input_form,
-                                                                        Xresult.fold == x + 1,
-                                                                        Xresult.test_loss == subquery).first()
+            subquery = db.session.query(func.max(XResult.test_accuracy)).filter(XResult.description == description,
+                                                                                XResult.hyperparameters == json_hyperparameter,
+                                                                                XResult.input_form == input_form,
+                                                                                XResult.fold == x + 1)
+            model_with_most_accuracy = db.session.query(XResult).filter(XResult.description == description,
+                                                                        XResult.hyperparameters == json_hyperparameter,
+                                                                        XResult.input_form == input_form,
+                                                                        XResult.fold == x + 1,
+                                                                        XResult.test_loss == subquery).first()
             least_loss_list.append(model_with_most_accuracy)
 
     # average the probabilities of the n models for the n folds selected
@@ -125,3 +126,14 @@ def ensemble_folds(json_hyperparameter, description, mode, input_form):
     test_acc = test_acc / len(least_loss_list)
 
     return holdout_f1_result, holdout_accuracy_result, test_acc, test_loss
+
+# given the run name, split seed, and input_form
+def check_run_and_split(description, split, input_form):
+    subquery = db.session.query(XResult).filter(XResult.description == description, XResult.split == split, XResult.input_form == input_form)
+    check = db.session.query(subquery.exists()).scalar()
+    if check:
+        sys.stderr.write("The run " + description + " and split " + str(split) + " already exists in the database")
+        sys.exit()
+    else:
+        return
+

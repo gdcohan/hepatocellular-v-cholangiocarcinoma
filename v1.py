@@ -122,7 +122,7 @@ def class_weight(training):
     raw_counts = dict(zip(unique, counts))
     return { k: len(training.classes)/v for k, v in raw_counts.items() }
 
-def train(model, training, validation, run_id):
+def train(model, training, validation, run_id, monitor):
     # callbacks
     checkpoint = ModelCheckpoint(
         os.path.join(
@@ -132,7 +132,7 @@ def train(model, training, validation, run_id):
                 MODEL_NAME,
             ),
         ),
-        monitor='val_acc',
+        monitor=monitor,
         verbose=1,
         save_best_only=True,
         save_weights_only=False,
@@ -140,7 +140,7 @@ def train(model, training, validation, run_id):
         period=1,
     )
     early = EarlyStopping(
-        monitor='val_acc',
+        monitor=monitor,
         min_delta=0,
         patience=config.PATIENCE,
         verbose=1,
@@ -158,23 +158,28 @@ def train(model, training, validation, run_id):
     )
     return history.history
 
-#first called by the main run function
-def run(run_id=None, split_id=None, input_form=config.INPUT_FORM, loaded_data=None, label_form="outcome", hyperparameters=dict()):
+
+# first called by the main run function
+def run(run_id=None, mode='normal', loaded_data=None, split_id=None, input_form=config.INPUT_FORM,  label_form="outcome", hyperparameters=dict()):
     if run_id is None:
         run_id = int(datetime.utcnow().timestamp())
     if split_id is None:
         split_id = run_id
-    # there should be loaded data, otherwise we are forming the data again
-    if loaded_data is None:
-        # create the data objects
-        training, validation, test = data(split_id, input_form=input_form, label_form=label_form)
-    else:
-        # run on the loaded_data if available
-        training, validation, test = loaded_data
-    # new model instance with the 3 sets
-    model_instance = model(input_form, aux_size=training.features_size, hyperparameters=hyperparameters)
-    # return trained model
-    return train(model_instance, training, validation, run_id)
+
+    if mode == 'normal':
+        if loaded_data is None:
+            # create the data objects
+            training, validation, test = data(split_id, input_form=input_form, label_form=label_form)
+        else:
+            training, validation, test = loaded_data
+        model_instance = model(input_form, aux_size=training.features_size, hyperparameters=hyperparameters)
+        # return trained model
+        return train(model_instance, training, validation, run_id, 'val_acc')
+    elif mode == 'cross':
+        training, validation, test, holdout_test = loaded_data
+        model_instance = model(input_form, aux_size=training.features_size, hyperparameters=hyperparameters)
+        return train(model_instance, training, validation, run_id, 'val_loss')
+
 
 if __name__ == '__main__':
     run()

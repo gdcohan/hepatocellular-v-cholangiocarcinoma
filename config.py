@@ -21,11 +21,11 @@ class Config(object):
     SECRET = "example secret key"
     LOG_LEVEL = logging.DEBUG
 
-    RAW_NRRD_ROOT = "/data/Dropbox/Dropbox/renal tumor/renal tumor/DICOM/"
+    RAW_NRRD_ROOT = "C:/research/ovarian/ovarian_data/data"
     RAW_FEATURES = [
-        "/data/Dropbox/Dropbox/Updated-CSV/Kideny__Malignant__clinical.csv",
-        "/data/Dropbox/Dropbox/Updated-CSV/Kideny__Malignant__institutions.csv",
-        "/data/Dropbox/Dropbox/Updated-CSV/Kideny__Malignant__outcomes.csv",
+        "C:/research/ovarian/ovarian_data/csv/",
+        "C:/research/ovarian/ovarian_data/csv/",
+        "C:/research/ovarian/ovarian_data/csv/",
         ]
 
     DATA = "/data/intrepidlemon/renal"

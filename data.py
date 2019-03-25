@@ -382,5 +382,84 @@ def data(seed=None,
         )
     return train_generator, validation_generator, test_generator
 
+def xdata(fold_number,
+          train,
+          validation,
+          test,
+          holdout_test,
+          seed=None,
+          input_form=config.INPUT_FORM,
+          label_form="outcome",
+          train_shuffle=True,
+          validation_shuffle=False,
+          test_shuffle=False,
+          train_augment=True,
+          validation_augment=False,
+          test_augment=False,
+          verbose=False
+          ):
+
+    #save the data in each set for the fold run
+    fold_string = 'fold-' + str(fold_number)
+    train.to_csv(os.path.join(config.DATASET_RECORDS, fold_string + "-{}-ktrain.csv".format(str(seed))))
+    validation.to_csv(os.path.join(config.DATASET_RECORDS, fold_string + "-{}-kvalidation.csv".format(str(seed))))
+    test.to_csv(os.path.join(config.DATASET_RECORDS, fold_string + "-{}-ktest.csv".format(str(seed))))
+    holdout_test.to_csv(os.path.join(config.DATASET_RECORDS, fold_string + "-{}-kholdouttest.csv".format(str(seed))))
+
+    # loading of the features - this is supposed to be the bottleneck, but seems to be pretty fast when I was testing it; refactor later
+    train_images, train_features, train_labels, train_names = relist(generate_from_features(train, input_form=input_form, label_form=label_form, verbose=verbose))
+    validation_images, validation_features, validation_labels, validation_names = relist(generate_from_features(validation, input_form=input_form, label_form=label_form, verbose=verbose))
+    test_images, test_features, test_labels, test_names = relist(generate_from_features(test, input_form=input_form, label_form=label_form, verbose=verbose))
+    holdouttest_images, holdouttest_features, holdouttest_labels, holdouttest_names = relist(
+        generate_from_features(holdout_test, input_form=input_form, label_form=label_form, verbose=verbose))
+
+    train_features = relist(train_features)
+    validation_features = relist(validation_features)
+    test_features = relist(test_features)
+    holdouttest_features = relist(holdouttest_features)
+
+    train_generator = Dataset(
+            train_images,
+            train_features,
+            train_labels,
+            train_names,
+            augment=train_augment,
+            shuffle=train_shuffle,
+            input_form=input_form,
+            seed=seed,
+        )
+    validation_generator = Dataset(
+            validation_images,
+            validation_features,
+            validation_labels,
+            validation_names,
+            augment=validation_augment,
+            shuffle=validation_shuffle,
+            input_form=input_form,
+            seed=seed,
+        )
+    test_generator = Dataset(
+            test_images,
+            test_features,
+            test_labels,
+            test_names,
+            augment=test_augment,
+            shuffle=test_shuffle,
+            input_form=input_form,
+            seed=seed,
+        )
+    holdout_test_generator = Dataset(
+            holdouttest_images,
+            holdouttest_features,
+            holdouttest_labels,
+            holdouttest_names,
+            # what should the augment and shuffle be for the holdout test? Set to same as test
+            augment=test_augment,
+            shuffle=test_shuffle,
+            input_form=input_form,
+            seed=seed,
+        )
+    return train_generator, validation_generator, test_generator, holdout_test_generator
+
 if __name__ == '__main__':
     data(uuid.uuid4())

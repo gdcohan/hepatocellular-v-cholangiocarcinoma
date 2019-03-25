@@ -5,14 +5,14 @@ import json
 
 from datetime import datetime
 from models import models
-from db import db, Xresult
+from db import db, XResult
 from uuid import uuid4, UUID
 
 from keras import backend as K
 
 import numpy as np
 import evaluate
-from xdata import xdata
+from data import xdata
 
 from config import config
 
@@ -74,7 +74,7 @@ def test_model(model, train, validation, test, holdout_test):
         "probabilities": probabilities,
         "labels": labels,
         "test_probabilities": test_probabilities,
-        "test_labels":test_labels,
+        "test_labels": test_labels,
         "holdout_test_probabilities": holdout_test_probabilities,
         "holdout_test_labels": holdout_test_labels,
         "test_f1_result": test_f1_result,
@@ -95,7 +95,7 @@ def xrun(fold, loaded_data, model, description, input_form, label_form="outcome"
         split_id = run_id
 
     # calling run function on the cross validation v1 model
-    history = model.run(loaded_data, run_id, input_form=input_form, hyperparameters=hyperparameters)
+    history = model.run(run_id,  mode='cross', loaded_data=loaded_data, input_form=input_form, label_form=label_form, hyperparameters=hyperparameters)
     # clearing the training session because we will be running multiple models
     K.clear_session()
 
@@ -123,18 +123,19 @@ def xrun(fold, loaded_data, model, description, input_form, label_form="outcome"
     fold_test.reset()
     fold_holdout_test.reset()
 
-    result = Xresult(
+    result = XResult(
         fold,
+        config.NUMBER_OF_FOLDS,
         model.MODEL_NAME,
         str(run_id),
-        str(split_id),
+        int(split_id),
         train_data_stats,
         validation_data_stats,
         test_data_stats,
         holdout_test_data_stats,
         description,
         input_form,
-        label=label_form,
+        label_form,
         hyperparameters=hyperparameters,
         history=history,
         **results
@@ -184,7 +185,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--split',
         type=str,
-        help='UUID for split',
+        help='seed for split',
         default=None,
         )
     parser.add_argument(
@@ -203,40 +204,38 @@ if __name__ == '__main__':
         parameters = json.load(f)
         parameters = explode_parameters(parameters)
     model = models[FLAGS.model]
-    split = FLAGS.split
-    if split is None:
-        split = uuid4()
-    else:
-        split = UUID(split)
 
-    # check to make sure we didn't use the description on another run AND input_form - Add later for error checking
+    split = int(FLAGS.split)
+    # check to make sure we didn't use the description on another run AND split
+    xanalyze.check_run_and_split(FLAGS.description, split, FLAGS.form)
 
     # splitting the initial training and holdout test sets
     f = pandas.read_pickle(config.FEATURES)
     y = f[FLAGS.label].values
     # get a separate set for holdout testing
-    k_fold_train, holdout_test, y_train, y_test = train_test_split(f, y, test_size=config.MAIN_TEST_HOLDOUT, stratify=y)
+    k_fold_train, holdout_test, y_train, y_test = train_test_split(f, y, test_size=config.MAIN_TEST_HOLDOUT, stratify=y, random_state=split)
     # set up the k-fold process
-    skf = StratifiedKFold(n_splits=config.NUMBER_OF_FOLDS)
+    skf = StratifiedKFold(n_splits=config.NUMBER_OF_FOLDS, random_state=split)
 
     # get the folds and loop over each fold
-    foldNumber = 0
+    fold_number = 0
     for train_index, test_index in skf.split(k_fold_train, y_train):
-        foldNumber += 1
+        fold_number += 1
         # get the training and testing set for the fold
         X_train, testing = k_fold_train.iloc[train_index], k_fold_train.iloc[test_index]
         y_train, y_test = y[train_index], y[test_index]
         # split the training into training and validation
-        training, validation, result_train, result_test = train_test_split(X_train, y_train, test_size=config.SPLIT_TRAINING_INTO_VALIDATION, stratify=y_train)
+        training, validation, result_train, result_test = train_test_split(X_train, y_train, test_size=config.SPLIT_TRAINING_INTO_VALIDATION, stratify=y_train, random_state=split)
         # get the data
-        trainingData, validationData, testingData, holdoutTestData = xdata(foldNumber, training, validation, testing, holdout_test, split, input_form=FLAGS.form, label_form=FLAGS.label)
+        training_data, validation_data, testing_data, holdout_test_data = xdata(fold_number, training, validation, testing, holdout_test, split, input_form=FLAGS.form, label_form=FLAGS.label)
         # run the training, each trial
         for _ in range(FLAGS.trials):
             # in each trial, run for each hyperparameter combination
             for hyperparameters in parameters:
-                xrun(foldNumber, (trainingData, validationData, testingData, holdoutTestData), model, FLAGS.description, FLAGS.form, FLAGS.label, split, hyperparameters=hyperparameters)
+                xrun(fold_number, (training_data, validation_data, testing_data, holdout_test_data), model, FLAGS.description, FLAGS.form, FLAGS.label, split, hyperparameters=hyperparameters)
                 K.clear_session()
 
     # independent testing across trials * folds
     xanalyze.analyze_averages(parameters, FLAGS.description, FLAGS.model, FLAGS.form, split)
+
 

@@ -64,7 +64,7 @@ def run(model, description, input_form, label_form="outcome", split_id=None, loa
     if split_id is None:
         split_id = run_id
 
-    history = model.run(run_id, input_form=input_form, loaded_data=loaded_data, label_form=label_form, hyperparameters=hyperparameters)
+    history = model.run(run_id, mode='normal', input_form=input_form, loaded_data=loaded_data, label_form=label_form, hyperparameters=hyperparameters)
     K.clear_session()
 
     model_instance = evaluate.load(os.path.join(

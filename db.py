@@ -113,7 +113,8 @@ class Result(db.Model):
             "trainAccuracy": self.train_accuracy,
             "accuracy": self.accuracy,
             "input_form": self.input_form,
-            "label": self.label_form,
+            # is this supposed to be label?
+            "label": self.label,
         }
 
     def results(self):
@@ -132,13 +133,14 @@ class Result(db.Model):
     def label_form(self):
         return self.label
 
-class Xresult(db.Model):
+class XResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String)
-    split_uuid = db.Column(db.String)
+    split = db.Column(db.Integer)
+    run_id = db.Column(db.String)
     created_on = db.Column(db.DateTime, default=datetime.utcnow)
 
     fold = db.Column(db.Integer)
+    total_folds = db.Column(db.Integer)
     model = db.Column(db.String)
     train_data_stats = db.Column(db.String)
     validation_data_stats = db.Column(db.String)
@@ -177,41 +179,43 @@ class Xresult(db.Model):
         return '<Result accuracy: {}>'.format(self.accuracy)
 
     def __init__(self,
-            fold,
-            model,
-            uuid,
-            split_uuid,
-            train_data_stats,
-            validation_data_stats,
-            test_data_stats,
-            holdout_test_data_stats,
-            description,
-            input_form,
-            label,
-            train_accuracy,
-            train_loss,
-            test_accuracy,
-            test_loss,
-            accuracy,
-            loss,
-            holdout_test_accuracy,
-            holdout_test_loss,
-            probabilities,
-            labels,
-            test_probabilities,
-            test_labels,
-            holdout_test_probabilities,
-            holdout_test_labels,
-            hyperparameters,
-            history,
-            test_f1_result,
-            holdout_f1_result
-            ):
+                 fold,
+                 total_folds,
+                 model,
+                 run_id,
+                 split,
+                 train_data_stats,
+                 validation_data_stats,
+                 test_data_stats,
+                 holdout_test_data_stats,
+                 description,
+                 input_form,
+                 label_form,
+                 train_accuracy,
+                 train_loss,
+                 test_accuracy,
+                 test_loss,
+                 accuracy,
+                 loss,
+                 holdout_test_accuracy,
+                 holdout_test_loss,
+                 probabilities,
+                 labels,
+                 test_probabilities,
+                 test_labels,
+                 holdout_test_probabilities,
+                 holdout_test_labels,
+                 hyperparameters,
+                 history,
+                 test_f1_result,
+                 holdout_f1_result
+                 ):
 
         self.fold = fold
+        self.total_folds = total_folds
         self.model = model
-        self.uuid = uuid
-        self.split_uuid = split_uuid
+        self.split = split
+        self.run_id = run_id
 
         self.train_data_stats = json.dumps(train_data_stats, default=default)
         self.validation_data_stats = json.dumps(validation_data_stats, default=default)
@@ -240,7 +244,7 @@ class Xresult(db.Model):
 
         self.description = description
         self.input_form = input_form
-        self.label = label
+        self.label_form = label_form
 
         self.hyperparameters = json.dumps(hyperparameters)
 
@@ -250,8 +254,9 @@ class Xresult(db.Model):
     def dict(self):
         return {
             "fold": self.fold,
+            "total_folds": self.total_folds,
             "id": self.id,
-            "uuid": self.uuid,
+            "split": self.split,
             "model": self.model,
             "createdOn": self.created_on.timestamp(),
             "trainDataStats": json.loads(self.train_data_stats),
@@ -259,7 +264,7 @@ class Xresult(db.Model):
             "trainAccuracy": self.train_accuracy,
             "accuracy": self.accuracy,
             "input_form": self.input_form,
-            "label": self.label_form,
+            "label_form": self.label_form,
         }
 
     def get_holdout_probabilities(self):
@@ -271,17 +276,7 @@ class Xresult(db.Model):
     def get_hyperparameters(self):
         return json.loads(self.hyperparameters)
 
-    @property
-    def split_seed(self):
-        if self.split_uuid:
-            return self.split_uuid
-        return uuid
-
-    @property
-    def label_form(self):
-        return self.label
-
-class Calculatedresult(db.Model):
+class CalculatedResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     created_on = db.Column(db.DateTime, default=datetime.utcnow)
     split = db.Column(db.String)
