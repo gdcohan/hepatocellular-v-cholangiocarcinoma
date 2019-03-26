@@ -14,8 +14,8 @@ from segmentation import calculate_volume
 
 clinical_feature_functions = {
     "outcome": lambda f: "malignant" if f["Malignancy-binary"] == "1" else "benign",
-    "age": lambda f: int(f["Age"]),
-    "sex": lambda f: 1 if f["Sex"] == "M" else 0,
+    # "age": lambda f: int(f["Age"]),
+    # "sex": lambda f: 1 if f["Sex"] == "M" else 0,
 }
 
 def clinical_features(feat, filename):
@@ -97,6 +97,7 @@ def normalize_column(df, column=""):
     df[column] = pandas.Series(x_scaled, index=df.index)
     return df
 
+# start calc run here
 def run(folder, features_files, out, save=True):
     nrrds = all_nrrd(folder)
     feat = all_features(features_files)
@@ -111,8 +112,8 @@ def run(folder, features_files, out, save=True):
     nrrd_features = filter_filenames(nrrd_features)
     nrrd_features = nrrd_features.dropna()
 
-    nrrd_features = normalize_column(nrrd_features, column="age")
-    nrrd_features = normalize_column(nrrd_features, column="volume")
+    # nrrd_features = normalize_column(nrrd_features, column="age")
+    # nrrd_features = normalize_column(nrrd_features, column="volume")
 
     features_to_use = features(nrrd_features)
 
