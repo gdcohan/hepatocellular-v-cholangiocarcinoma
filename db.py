@@ -135,7 +135,7 @@ class Result(db.Model):
 
 class XResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    split = db.Column(db.Integer)
+    split = db.Column(db.String)
     run_id = db.Column(db.String)
     created_on = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -214,8 +214,8 @@ class XResult(db.Model):
         self.fold = fold
         self.total_folds = total_folds
         self.model = model
-        self.split = split
         self.run_id = run_id
+        self.split = split
 
         self.train_data_stats = json.dumps(train_data_stats, default=default)
         self.validation_data_stats = json.dumps(validation_data_stats, default=default)

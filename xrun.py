@@ -128,7 +128,7 @@ def xrun(fold, loaded_data, model, description, input_form, label_form="outcome"
         config.NUMBER_OF_FOLDS,
         model.MODEL_NAME,
         str(run_id),
-        int(split_id),
+        str(split_id),
         train_data_stats,
         validation_data_stats,
         test_data_stats,
@@ -204,18 +204,21 @@ if __name__ == '__main__':
         parameters = json.load(f)
         parameters = explode_parameters(parameters)
     model = models[FLAGS.model]
-
-    split = int(FLAGS.split)
+    split = FLAGS.split
+    if split is None:
+        split = uuid4()
+    else:
+        split = UUID(split)
     # check to make sure we didn't use the description on another run AND split
-    xanalyze.check_run_and_split(FLAGS.description, split, FLAGS.form)
+    xanalyze.check_run_and_split(FLAGS.description, str(split), FLAGS.form)
 
     # splitting the initial training and holdout test sets
     f = pandas.read_pickle(config.FEATURES)
     y = f[FLAGS.label].values
     # get a separate set for holdout testing
-    k_fold_train, holdout_test, y_train, y_test = train_test_split(f, y, test_size=config.MAIN_TEST_HOLDOUT, stratify=y, random_state=split)
+    k_fold_train, holdout_test, y_train, y_test = train_test_split(f, y, test_size=config.MAIN_TEST_HOLDOUT, stratify=y, random_state=int(split) % 2 ** 32)
     # set up the k-fold process
-    skf = StratifiedKFold(n_splits=config.NUMBER_OF_FOLDS, random_state=split)
+    skf = StratifiedKFold(n_splits=config.NUMBER_OF_FOLDS, random_state=int(split) % 2 ** 32)
 
     # get the folds and loop over each fold
     fold_number = 0
@@ -225,7 +228,7 @@ if __name__ == '__main__':
         X_train, testing = k_fold_train.iloc[train_index], k_fold_train.iloc[test_index]
         y_train, y_test = y[train_index], y[test_index]
         # split the training into training and validation
-        training, validation, result_train, result_test = train_test_split(X_train, y_train, test_size=config.SPLIT_TRAINING_INTO_VALIDATION, stratify=y_train, random_state=split)
+        training, validation, result_train, result_test = train_test_split(X_train, y_train, test_size=config.SPLIT_TRAINING_INTO_VALIDATION, stratify=y_train, random_state=int(split) % 2 ** 32)
         # get the data
         training_data, validation_data, testing_data, holdout_test_data = xdata(fold_number, training, validation, testing, holdout_test, split, input_form=FLAGS.form, label_form=FLAGS.label)
         # run the training, each trial

@@ -132,7 +132,7 @@ def check_run_and_split(description, split, input_form):
     subquery = db.session.query(XResult).filter(XResult.description == description, XResult.split == split, XResult.input_form == input_form)
     check = db.session.query(subquery.exists()).scalar()
     if check:
-        sys.stderr.write("The run " + description + " and split " + str(split) + " already exists in the database")
+        sys.stderr.write("The run " + description + " and split " + split + " already exists in the database")
         sys.exit()
     else:
         return
