@@ -239,6 +239,7 @@ if __name__ == '__main__':
                 K.clear_session()
 
     # independent testing across trials * folds
+    print('The split id for this run ' + FLAGS.description + ' is ' + str(split))
     xanalyze.analyze_averages(parameters, FLAGS.description, FLAGS.model, FLAGS.form, split)
 
 

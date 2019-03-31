@@ -165,7 +165,7 @@ class XResult(db.Model):
 
     description = db.Column(db.String)
     input_form = db.Column(db.String)
-    label = db.Column(db.String)
+    label_form = db.Column(db.String)
 
     hyperparameters = db.Column(db.String)
 

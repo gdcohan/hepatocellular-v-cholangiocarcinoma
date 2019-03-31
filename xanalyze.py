@@ -1,7 +1,6 @@
 from config import config
 from db import db, XResult, CalculatedResult
 from sqlalchemy.sql import func
-from sqlalchemy.sql import exists
 import json
 import sys
 import evaluate
@@ -84,7 +83,7 @@ def ensemble_folds(json_hyperparameter, description, mode, input_form):
                                                                         XResult.hyperparameters == json_hyperparameter,
                                                                         XResult.input_form == input_form,
                                                                         XResult.fold == x + 1,
-                                                                        XResult.test_loss == subquery).first()
+                                                                        XResult.test_accuracy == subquery).first()
             least_loss_list.append(model_with_most_accuracy)
 
     # average the probabilities of the n models for the n folds selected
@@ -136,4 +135,24 @@ def check_run_and_split(description, split, input_form):
         sys.exit()
     else:
         return
+
+def get_models(split, description):
+
+    model_list = list()
+    # get the trials with the least loss for each fold
+
+    input_form = ['t1', 't2']
+
+    for x in input_form:
+        subquery = db.session.query(func.max(XResult.test_accuracy)).filter(XResult.description == description,
+                                                                            XResult.split == split,
+                                                                            XResult.input_form == x)
+
+        model_with_most_accuracy = db.session.query(XResult).filter(XResult.description == description,
+                                                                    XResult.input_form == x,
+                                                                    XResult.test_accuracy == subquery).first()
+
+        model_list.append(model_with_most_accuracy.run_id)
+
+    return model_list
 
