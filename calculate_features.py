@@ -80,7 +80,7 @@ def filter_filenames(df):
     return df
 
 def features(df):
-    df = df[df.modality=="T1C"][df.filename=="segMask_tumor.nrrd"][["accession", "patient", "volume", *list(clinical_feature_functions.keys())]]
+    df = df[df.modality=="T1"][df.filename=="segMask_tumor.nrrd"][["accession", "patient", "volume", *list(clinical_feature_functions.keys())]]
     df = df.set_index("accession")
     df = df.dropna()
     return df
@@ -114,7 +114,7 @@ def run(folder, features_files, out, save=True):
 
     # nrrd_features = normalize_column(nrrd_features, column="age")
     # nrrd_features = normalize_column(nrrd_features, column="volume")
-
+    # patient, volume, outcome
     features_to_use = features(nrrd_features)
 
     to_preprocess = preprocessing(nrrd_features)

@@ -67,6 +67,18 @@ def model(input_form="all", aux_size=0, hyperparameters=dict()):
         inputs.append(convnet.input)
         outputs.append(out)
 
+    if parameters["t1_post"]:
+        # init ResNet
+        convnet = applications.ResNet50(
+            weights="imagenet",
+            include_top=False,
+            input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3),
+        )
+        out = convnet.output
+        out = Flatten()(out)
+        inputs.append(convnet.input)
+        outputs.append(out)
+
     if len(outputs) > 1:
         out = concatenate(outputs)
     else:

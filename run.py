@@ -173,3 +173,5 @@ if __name__ == '__main__':
         for hyperparameters in parameters:
             run(model, FLAGS.description, FLAGS.form, FLAGS.label, split, loaded_data=(training, validation, test), hyperparameters=hyperparameters)
             K.clear_session()
+
+    print('The split id for this run ' + FLAGS.description + ' is ' + str(split))

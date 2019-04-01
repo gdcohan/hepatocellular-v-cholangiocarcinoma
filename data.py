@@ -4,67 +4,67 @@ import os
 import numpy as np
 import pandas
 import nrrd
-import glob
-import argparse
-import random
-from PIL import Image
-import csv
-from shutil import rmtree
-from collections import defaultdict
+
 from keras.preprocessing.image import ImageDataGenerator, Iterator
 from tqdm import tqdm
 
 from segmentation import calculate_percentile_slice, select_slice, bounding_box, crop, resize, calculate_volume
 from config import config
 
-from filenames import IMAGE, SEGMENTATION, T1, T2
+from filenames import IMAGE, SEGMENTATION, T1, T1POST, T2
 
 clinical_features = [
-    "age",
-    "sex",
     "volume",
 ]
 
-def all_input(t1, t2, features, labels):
+def all_input(t1, t1_post, t2, features, labels):
+    t1_image = np.array(t1)
+    t1_image = np.rollaxis(t1_image, 0, 3)
+    t1_post_image = np.array(t1_post)
+    t1_post_image = np.rollaxis(t1_post_image, 0, 3)
+    t2_image = np.array(t2)
+    t2_image = np.rollaxis(t2_image, 0, 3)
+    return (t1_image, t1_post_image, t2_image), features, labels
+
+def t1_input(t1, t1_post, t2, features, labels):
+    t1_image = np.array(t1)
+    t1_image = np.rollaxis(t1_image, 0, 3)
+    return (t1_image, None, None), [], labels
+
+def t1_post_input(t1, t1_post, t2, features, labels):
+    t1_post_image = np.array(t1_post)
+    t1_post_image = np.rollaxis(t1_post_image, 0, 3)
+    return (None, t1_post_image, None), [], labels
+
+def t2_input(t1, t1_post, t2, features, labels):
+    t2_image = np.array(t2)
+    t2_image = np.rollaxis(t2_image, 0, 3)
+    return (None, None, t2_image), [], labels
+
+def t1_t2_input(t1, t1_post, t2, features, labels):
     t1_image = np.array(t1)
     t1_image = np.rollaxis(t1_image, 0, 3)
     t2_image = np.array(t2)
     t2_image = np.rollaxis(t2_image, 0, 3)
-    return (t1_image, t2_image), features, labels
+    return (t1_image, None, t2_image), [], labels
 
-def t1_input(t1, t2, features, labels):
-    t1_image = np.array(t1)
-    t1_image = np.rollaxis(t1_image, 0, 3)
-    return (t1_image, None), [], labels
-
-def t2_input(t1, t2, features, labels):
-    t2_image = np.array(t2)
-    t2_image = np.rollaxis(t2_image, 0, 3)
-    return (None, t2_image), [], labels
-
-def t1_t2_input(t1, t2, features, labels):
-    t1_image = np.array(t1)
-    t1_image = np.rollaxis(t1_image, 0, 3)
-    t2_image = np.array(t2)
-    t2_image = np.rollaxis(t2_image, 0, 3)
-    return (t1_image, t2_image), [], labels
-
-def t1_features_input(t1, t2, features, labels):
+def t1_features_input(t1, t1_post, t2, features, labels):
     t1_image = np.array(t2)
     t1_image = np.rollaxis(t1_image, 0, 3)
-    return (t1_image, None), features, labels
+    return (t1_image, None, None), features, labels
 
-def t2_features_input(t1, t2, features, labels):
+def t2_features_input(t1, t1_post, t2, features, labels):
     t2_image = np.array(t2)
     t2_image = np.rollaxis(t2_image, 0, 3)
-    return (t2_image, None), features, labels
+    return (None, None, t2_image), features, labels
 
-def features_input(t1, t2, features, labels):
-    return (None, None), features, labels
+def features_input(t1, t1_post, t2, features, labels):
+    return (None, None, None), features, labels
 
 INPUT_FORMS = {
     "all": all_input,
     "t1": t1_input,
+    "t1_post": t1_post_input,
     "t2": t2_input,
     "t1-t2": t1_t2_input,
     "t1-features": t1_features_input,
@@ -76,36 +76,49 @@ INPUT_FORM_PARAMETERS = {
     "all": {
         "t1": True,
         "t2": True,
+        "t1_post": True,
         "features": True,
     },
     "t1": {
         "t1": True,
         "t2": False,
+        "t1_post": False,
+        "features": False,
+    },
+    "t1_post": {
+        "t1": False,
+        "t2": False,
+        "t1_post": True,
         "features": False,
     },
     "t2": {
         "t1": False,
         "t2": True,
+        "t1_post": False,
         "features": False,
     },
     "t1-t2": {
         "t1": True,
         "t2": True,
+        "t1_post": False,
         "features": False,
     },
     "t1-features": {
         "t1": True,
         "t2": False,
+        "t1_post": False,
         "features": True,
     },
     "t2-features": {
         "t1": False,
         "t2": True,
+        "t1_post": False,
         "features": True,
     },
     "features": {
         "t1": False,
         "t2": False,
+        "t1_post": False,
         "features": True,
     },
 }
@@ -155,8 +168,12 @@ class Dataset(object):
             self.t1 = np.array(separate_images[0])
             self.datagen = self._get_data_generator()
 
+        if self.parameters["t1_post"]:
+            self.t1_post = np.array(separate_images[1])
+            self.datagen1 = self._get_data_generator()
+
         if self.parameters["t2"]:
-            self.t2 = np.array(separate_images[1])
+            self.t2 = np.array(separate_images[2])
             self.datagen2 = self._get_data_generator()
 
         self.reset()
@@ -181,6 +198,15 @@ class Dataset(object):
                     batch_size=config.BATCH_SIZE,
                     shuffle=self.shuffle,
                     seed=hash(self.seed) % 2**32,
+                    )
+
+        if self.parameters["t1_post"]:
+            self.generator_t1_post = self.datagen1.flow(
+                    x=self.t1_post,
+                    y=self.y,
+                    batch_size=config.BATCH_SIZE,
+                    shuffle=self.shuffle,
+                    seed=hash(self.seed) % 2**32 ,
                     )
 
         if self.parameters["t2"]:
@@ -213,6 +239,8 @@ class Dataset(object):
             inputs.append(self.generator_t2.next()[0])
         if self.parameters["t1"]:
             inputs.append(self.generator_t1.next()[0])
+        if self.parameters["t1_post"]:
+            inputs.append(self.generator_t1_post.next()[0])
         if self.parameters["features"]:
             inputs.append(self.features_generator.next())
         if len(inputs) == 1:
@@ -232,8 +260,8 @@ def get_label_features(row, label="outcome"):
     """returns label, features, sample name"""
     return (*LABEL_FORMS[label](row), row.name)
 
-def input_data_form(t1, t2, features, labels, input_form=config.INPUT_FORM):
-    images, features, labels = INPUT_FORMS[input_form](t1, t2, features, labels)
+def input_data_form(t1, t1_post_masked, t2, features, labels, input_form=config.INPUT_FORM):
+    images, features, labels = INPUT_FORMS[input_form](t1, t1_post_masked, t2, features, labels)
     return images, features, labels
 
 def load_image(image_path, segmentation_path, verbose=False):
@@ -269,21 +297,31 @@ def generate_from_features(df, input_form=config.INPUT_FORM, label_form="outcome
     for index, row in tqdm(df.iterrows(), total=len(df)):
         t1_image_file = os.path.join(source, "{}-{}-{}".format(index, T1, IMAGE))
         t1_seg_file = os.path.join(source, "{}-{}-{}".format(index, T1, SEGMENTATION))
+        t1_post_image_file = os.path.join(source, "{}-{}-{}".format(index, T1POST, IMAGE))
+        t1_post_seg_file = os.path.join(source, "{}-{}-{}".format(index, T1POST, SEGMENTATION))
         t2_image_file = os.path.join(source, "{}-{}-{}".format(index, T2, IMAGE))
         t2_seg_file = os.path.join(source, "{}-{}-{}".format(index, T2, SEGMENTATION))
         try:
             t1_masked = None
+            t1_post_masked = None
             t2_masked = None
             if parameters["t1"] or parameters["features"]: # load in case of features so that files that error out aren't included in analysis
                 if verbose:
                     print(SHAPES_OUTPUT.format("t1"))
                 t1_masked = load_image(t1_image_file, t1_seg_file, verbose=verbose)
+
+            if parameters["t1_post"]:
+                if verbose:
+                    print(SHAPES_OUTPUT.format("t1_post"))
+                t1_post_masked = load_image(t1_post_image_file, t1_post_seg_file, verbose=verbose)
+
             if parameters["t2"]:
                 if verbose:
                     print(SHAPES_OUTPUT.format("t2"))
                 t2_masked = load_image(t2_image_file, t2_seg_file, verbose=verbose)
+
             labels, features, name = get_label_features(row, label=label_form)
-            images, features, labels = input_data_form(t1_masked, t2_masked, features, labels, input_form=input_form)
+            images, features, labels = input_data_form(t1_masked, t1_post_masked, t2_masked, features, labels, input_form=input_form)
             yield images, features, labels, name
 
         except Exception as e:
