@@ -24,7 +24,7 @@ class Config(object):
     RAW_NRRD_ROOT = "/home/user1/robin/ovarian/ovarian_data/raw"
     RAW_FEATURES = [
         "/home/user1/robin/ovarian/ovarian_data/csv/Ovarian_Outcome.csv",
-        "/home/user1/robin/ovarian/ovarian_data/Ovarian_Institution.csv",
+        "/home/user1/robin/ovarian/ovarian_data/csv/Ovarian_Institution.csv",
         # "C:/research/ovarian/ovarian_data/csv/",
         ]
 
