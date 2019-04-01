@@ -6,10 +6,10 @@ class Config(object):
     IMAGE_SIZE = 200
 
     # Should change trials to 10
-    TRIALS = 1
+    TRIALS = 10
     BATCH_SIZE = 16
 
-    EPOCHS = 1
+    EPOCHS = 500
     PATIENCE = 100
     SAMPLES_VALIDATION = 300
     VALIDATION_SPLIT = 0.2
@@ -21,27 +21,27 @@ class Config(object):
     SECRET = "example secret key"
     LOG_LEVEL = logging.DEBUG
 
-    RAW_NRRD_ROOT = "C:/research/ovarian/ovarian_data/raw"
+    RAW_NRRD_ROOT = "/home/user1/robin/ovarian/ovarian_data/raw"
     RAW_FEATURES = [
-        "C:/research/ovarian/ovarian_data/csv/Ovarian_Outcome.csv",
-        "C:/research/ovarian/ovarian_data/csv/Ovarian_Institution.csv",
+        "/home/user1/robin/ovarian/ovarian_data/csv/Ovarian_Outcome.csv",
+        "/home/user1/robin/ovarian/ovarian_data/Ovarian_Institution.csv",
         # "C:/research/ovarian/ovarian_data/csv/",
         ]
 
-    DATA = "C:/research/ovarian/ovarian_data/data"
+    DATA = "/home/user1/robin/ovarian/ovarian_data/data"
     PREPROCESSED_DIR = os.path.join(DATA, "preprocessed")
     TRAIN_DIR = os.path.join(DATA, "train")
     TEST_DIR = os.path.join(DATA, "test")
     VALIDATION_DIR = os.path.join(DATA, "validation")
 
-    FEATURES_DIR = "C:/research/ovarian/ovarian_data/features"
+    FEATURES_DIR = "/home/user1/robin/ovarian/ovarian_data/features"
     NRRD_FEATURES = os.path.join(FEATURES_DIR, "nrrd-features.pkl")
     FEATURES = os.path.join(FEATURES_DIR, "training-features.pkl")
     PREPROCESS = os.path.join(FEATURES_DIR, "preprocess.pkl")
 
     INPUT_FORM = "all"
 
-    OUTPUT = "C:/research/ovarian/ovarian_data/output"
+    OUTPUT = "/home/user1/robin/ovarian/ovarian_data/output"
     DB_URL = "sqlite:///{}/results.db".format(OUTPUT)
     MODEL_DIR = os.path.join(OUTPUT, "models")
     STDOUT_DIR = os.path.join(OUTPUT, "stdout")
