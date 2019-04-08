@@ -112,7 +112,7 @@ def run(folder, features_files, out, save=True):
     nrrd_features = filter_filenames(nrrd_features)
     nrrd_features = nrrd_features.dropna()
 
-    # nrrd_features = normalize_column(nrrd_features, column="age")
+    nrrd_features = normalize_column(nrrd_features, column="age")
     nrrd_features = normalize_column(nrrd_features, column="volume")
 
     # patient, volume, outcome
