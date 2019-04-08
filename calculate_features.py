@@ -14,7 +14,7 @@ from segmentation import calculate_volume
 
 clinical_feature_functions = {
     "outcome": lambda f: "malignant" if f["Malignancy-binary"] == "1" else "benign",
-    # "age": lambda f: int(f["Age"]),
+    "age": lambda f: int(f["Age"]),
     # "sex": lambda f: 1 if f["Sex"] == "M" else 0,
 }
 
