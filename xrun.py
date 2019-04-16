@@ -24,17 +24,17 @@ from sklearn.metrics import f1_score
 import xanalyze
 
 
-def test_model(model, train, validation, test, holdout_test):
+def test_model(model, train, validation, test):  # , holdout_test):
 
     train_loss, train_accuracy = model.evaluate_generator(train, steps=math.ceil(len(train) / config.BATCH_SIZE))
     loss, accuracy = model.evaluate_generator(validation, steps=math.ceil(len(validation)/config.BATCH_SIZE))
     test_loss, test_accuracy = model.evaluate_generator(test, steps=math.ceil(len(test)/config.BATCH_SIZE))
-    holdout_test_loss, holdout_test_accuracy = model.evaluate_generator(holdout_test, steps=math.ceil(len(holdout_test)/config.BATCH_SIZE))
+    # holdout_test_loss, holdout_test_accuracy = model.evaluate_generator(holdout_test, steps=math.ceil(len(holdout_test)/config.BATCH_SIZE))
 
     train.reset()
     validation.reset()
     test.reset()
-    holdout_test.reset()
+    # holdout_test.reset()
 
     # labels - ground truths
     # results - predicted results from model
@@ -46,21 +46,21 @@ def test_model(model, train, validation, test, holdout_test):
     test_probabilities = list(evaluate.transform_binary_probabilities(test_results))
     test_labels = list(evaluate.get_labels(test))
 
-    holdout_test_results = evaluate.get_results(model, holdout_test)
-    holdout_test_probabilities = list(evaluate.transform_binary_probabilities(holdout_test_results))
-    holdout_test_labels = list(evaluate.get_labels(holdout_test))
+    # holdout_test_results = evaluate.get_results(model, holdout_test)
+    # holdout_test_probabilities = list(evaluate.transform_binary_probabilities(holdout_test_results))
+    # holdout_test_labels = list(evaluate.get_labels(holdout_test))
 
     train.reset()
     validation.reset()
     test.reset()
-    holdout_test.reset()
+    # holdout_test.reset()
 
     # get binary predictions
-    holdout_binary_predictions = list(evaluate.transform_binary_predictions(holdout_test_results))
+    # holdout_binary_predictions = list(evaluate.transform_binary_predictions(holdout_test_results))
     test_binary_predictions = list(evaluate.transform_binary_predictions(test_results))
     # get f1 score
     test_f1_result = f1_score(test_labels, test_binary_predictions)
-    holdout_f1_result = f1_score(holdout_test_labels, holdout_binary_predictions)
+    # holdout_f1_result = f1_score(holdout_test_labels, holdout_binary_predictions)
 
     return {
         "train_accuracy": float(train_accuracy),
@@ -69,16 +69,21 @@ def test_model(model, train, validation, test, holdout_test):
         "loss": float(loss),
         "test_accuracy": float(test_accuracy),
         "test_loss": float(test_loss),
-        "holdout_test_accuracy": float(holdout_test_accuracy),
-        "holdout_test_loss": float(holdout_test_loss),
+        # "holdout_test_accuracy": float(holdout_test_accuracy),
+        # "holdout_test_loss": float(holdout_test_loss),
+        "holdout_test_accuracy": float(0),
+        "holdout_test_loss": float(0),
         "probabilities": probabilities,
         "labels": labels,
         "test_probabilities": test_probabilities,
         "test_labels": test_labels,
-        "holdout_test_probabilities": holdout_test_probabilities,
-        "holdout_test_labels": holdout_test_labels,
+        # "holdout_test_probabilities": holdout_test_probabilities,
+        # "holdout_test_labels": holdout_test_labels,
+        "holdout_test_probabilities": 'na',
+        "holdout_test_labels": 'na',
         "test_f1_result": test_f1_result,
-        "holdout_f1_result": holdout_f1_result,
+        # "holdout_f1_result": holdout_f1_result,
+        "holdout_f1_result": float(0),
     }
 
 def characterize_data(data):
@@ -105,23 +110,28 @@ def xrun(fold, loaded_data, model, description, input_form, label_form="outcome"
         "{}-{}.h5".format(str(run_id), model.MODEL_NAME),
         ))
 
-    fold_train, fold_validation, fold_test, fold_holdout_test = loaded_data
+    # fold_train, fold_validation, fold_test, fold_holdout_test = loaded_data
+    fold_train, fold_validation, fold_test = loaded_data
+
     fold_train.reset()
     fold_validation.reset()
     fold_test.reset()
-    fold_holdout_test.reset()
+    # fold_holdout_test.reset()
 
     train_data_stats = characterize_data(fold_train)
     validation_data_stats = characterize_data(fold_validation)
     test_data_stats = characterize_data(fold_test)
-    holdout_test_data_stats = characterize_data(fold_holdout_test)
+    # holdout_test_data_stats = characterize_data(fold_holdout_test)
 
     # testing of the data
-    results = test_model(model_instance, fold_train, fold_validation, fold_test, fold_holdout_test)
+    # results = test_model(model_instance, fold_train, fold_validation, fold_test, fold_holdout_test)
+    results = test_model(model_instance, fold_train, fold_validation, fold_test)
     fold_train.reset()
     fold_validation.reset()
     fold_test.reset()
-    fold_holdout_test.reset()
+    # fold_holdout_test.reset()
+
+    holdout_test_data_stats = 'na'
 
     result = XResult(
         fold,
@@ -215,31 +225,33 @@ if __name__ == '__main__':
     # splitting the initial training and holdout test sets
     f = pandas.read_pickle(config.FEATURES)
     y = f[FLAGS.label].values
-    # get a separate set for holdout testing
-    k_fold_train, holdout_test, y_train, y_test = train_test_split(f, y, test_size=config.MAIN_TEST_HOLDOUT, stratify=y, random_state=int(split) % 2 ** 32)
+
     # set up the k-fold process
     skf = StratifiedKFold(n_splits=config.NUMBER_OF_FOLDS, random_state=int(split) % 2 ** 32)
 
     # get the folds and loop over each fold
     fold_number = 0
-    for train_index, test_index in skf.split(k_fold_train, y_train):
+    for train_index, test_index in skf.split(f, y):
         fold_number += 1
         # get the training and testing set for the fold
-        X_train, testing = k_fold_train.iloc[train_index], k_fold_train.iloc[test_index]
+        X_train, testing = f.iloc[train_index], f.iloc[test_index]
         y_train, y_test = y[train_index], y[test_index]
         # split the training into training and validation
         training, validation, result_train, result_test = train_test_split(X_train, y_train, test_size=config.SPLIT_TRAINING_INTO_VALIDATION, stratify=y_train, random_state=int(split) % 2 ** 32)
         # get the data
-        training_data, validation_data, testing_data, holdout_test_data = xdata(fold_number, training, validation, testing, holdout_test, split, input_form=FLAGS.form, label_form=FLAGS.label)
+        # training_data, validation_data, testing_data, holdout_test_data = xdata(fold_number, training, validation, testing, holdout_test, split, input_form=FLAGS.form, label_form=FLAGS.label)
+        training_data, validation_data, testing_data = xdata(fold_number, training, validation, testing, split, input_form=FLAGS.form, label_form=FLAGS.label)
         # run the training, each trial
         for _ in range(FLAGS.trials):
             # in each trial, run for each hyperparameter combination
             for hyperparameters in parameters:
-                xrun(fold_number, (training_data, validation_data, testing_data, holdout_test_data), model, FLAGS.description, FLAGS.form, FLAGS.label, split, hyperparameters=hyperparameters)
+                # xrun(fold_number, (training_data, validation_data, testing_data, holdout_test_data), model, FLAGS.description, FLAGS.form, FLAGS.label, split, hyperparameters=hyperparameters)
+                xrun(fold_number, (training_data, validation_data, testing_data), model,
+                     FLAGS.description, FLAGS.form, FLAGS.label, split, hyperparameters=hyperparameters)
                 K.clear_session()
 
     # independent testing across trials * folds
     print('The split id for this run ' + FLAGS.description + ' is ' + str(split))
-    xanalyze.analyze_averages(parameters, FLAGS.description, FLAGS.model, FLAGS.form, split)
+    xanalyze.analyze_averages(parameters, FLAGS.description, FLAGS.model, FLAGS.form, str(split))
 
 

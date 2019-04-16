@@ -113,7 +113,7 @@ def xstacked_data(
     training_fixed = dict()
     validation = dict()
     test = dict()
-    holdout = dict()
+    # holdout = dict()
 
     for result in results:
         if result.input_form in training:
@@ -124,21 +124,21 @@ def xstacked_data(
         f = pandas.read_pickle(config.FEATURES)
         y = f[result.label_form].values
 
-        k_fold_train, holdout_test, y_train, y_test = train_test_split(f, y, test_size=config.MAIN_TEST_HOLDOUT,
-                                                                       stratify=y, random_state=int(split) % 2 ** 32)
+        # k_fold_train, holdout_test, y_train, y_test = train_test_split(f, y, test_size=config.MAIN_TEST_HOLDOUT, stratify=y, random_state=int(split) % 2 ** 32)
+
         # set up the k-fold process
         skf = StratifiedKFold(n_splits=config.NUMBER_OF_FOLDS, random_state=int(split) % 2 ** 32)
 
         # get the folds and loop over each fold
         fold_number = 0
-        for train_index, test_index in skf.split(k_fold_train, y_train):
+        for train_index, test_index in skf.split(f, y):
             fold_number += 1
 
             if fold_number != result.fold:
                 continue
 
             # get the training and testing set for the fold
-            X_train, testing = k_fold_train.iloc[train_index], k_fold_train.iloc[test_index]
+            X_train, testing = f.iloc[train_index], f.iloc[test_index]
             y_train, y_test = y[train_index], y[test_index]
             # split the training into training and validation
             train, valid, result_train, result_test = train_test_split(X_train, y_train,
@@ -146,8 +146,10 @@ def xstacked_data(
                                                                                stratify=y_train,
                                                                                random_state=int(split) % 2 ** 32)
 
-            train_generator, validation_generator, test_generator, holdout_test_generator = xdata(fold_number, train, valid,
-                                                                                            testing, holdout_test, split,
+            # train_generator, validation_generator, test_generator, holdout_test_generator
+            train_generator, validation_generator, test_generator = xdata(fold_number, train, valid,
+                                                                                            testing,  # holdout_test,
+                                                                                            split,
                                                                                             input_form=result.input_form,
                                                                                             label_form=result.label_form,
                                                                                             train_shuffle=True,
@@ -155,9 +157,9 @@ def xstacked_data(
                                                                                             train_augment=True,
                                                                                             validation_augment=False)
 
-            train_generator_f, validation_generator_f, test_generator_f, holdout_test_generator_f = xdata(fold_number, train,
-                                                                                                    valid,
-                                                                                                    testing, holdout_test,
+            # train_generator_f, validation_generator_f, test_generator_f, holdout_test_generator_f
+            train_generator_f, validation_generator_f, test_generator_f = xdata(fold_number, train, valid,
+                                                                                                    testing,  # holdout_test,
                                                                                                     split,
                                                                                                     input_form=result.input_form,
                                                                                                     label_form=result.label_form,
@@ -170,7 +172,7 @@ def xstacked_data(
             training_fixed[result.input_form] = train_generator_f
             validation[result.input_form] = validation_generator
             test[result.input_form] = test_generator
-            holdout[result.input_form] = holdout_test_generator
+            # holdout[result.input_form] = holdout_test_generator
 
     # generate labels
     train_labels = list()
@@ -183,7 +185,7 @@ def xstacked_data(
     first_training_fixed = list(training_fixed.values())[0]
     first_validation = list(validation.values())[0]
     first_test = list(test.values())[0]
-    first_holdout = list(holdout.values())[0]
+    # first_holdout = list(holdout.values())[0]
 
     for _ in range(epochs):
         train_labels += first_training.next()[1].tolist()
@@ -197,21 +199,21 @@ def xstacked_data(
     for _ in range(math.ceil(len(first_test)/config.BATCH_SIZE)):
         test_labels += first_test.next()[1].tolist()
 
-    for _ in range(math.ceil(len(first_holdout)/config.BATCH_SIZE)):
-        holdout_labels += first_holdout.next()[1].tolist()
+    # for _ in range(math.ceil(len(first_holdout)/config.BATCH_SIZE)):
+    #    holdout_labels += first_holdout.next()[1].tolist()
 
     first_training.reset()
     first_training_fixed.reset()
     first_validation.reset()
     first_test.reset()
-    first_holdout.reset()
+    # first_holdout.reset()
 
     # generate predictions
     train_predictions = list()
     train_fixed_predictions = list()
     validation_predictions = list()
     test_predictions = list()
-    holdout_predictions = list()
+    # holdout_predictions = list()
 
     for result in results:
         model = xload(result)
@@ -220,20 +222,20 @@ def xstacked_data(
         tf = training_fixed[result.input_form]
         v = validation[result.input_form]
         te = test[result.input_form]
-        h = holdout[result.input_form]
+        # h = holdout[result.input_form]
 
         train_predictions.append(model.predict_generator(t, steps=epochs).flatten())
         train_fixed_predictions.append(model.predict_generator(tf, steps=math.ceil(len(tf)/config.BATCH_SIZE)).flatten())
         validation_predictions.append(model.predict_generator(v, steps=math.ceil(len(v)/config.BATCH_SIZE)).flatten())
         test_predictions.append(model.predict_generator(te, steps=math.ceil(len(te)/config.BATCH_SIZE)).flatten())
-        holdout_predictions.append(model.predict_generator(h, steps=math.ceil(len(h) / config.BATCH_SIZE)).flatten())
+        # holdout_predictions.append(model.predict_generator(h, steps=math.ceil(len(h) / config.BATCH_SIZE)).flatten())
 
         t.reset()
         tf.reset()
         v.reset()
         te.reset()
-        h.reset()
+        # h.reset()
         K.clear_session()
         del model
 
-    return train_predictions, validation_predictions, test_predictions, train_labels, validation_labels, test_labels, train_fixed_predictions, training_fixed_labels, holdout_predictions, holdout_labels
+    return train_predictions, validation_predictions, test_predictions, train_labels, validation_labels, test_labels, train_fixed_predictions, training_fixed_labels  # holdout_predictions, holdout_labels

@@ -14,6 +14,7 @@ from config import config
 from filenames import IMAGE, SEGMENTATION, T1, T1POST, T2
 
 clinical_features = [
+    "age",
     "volume",
 ]
 
