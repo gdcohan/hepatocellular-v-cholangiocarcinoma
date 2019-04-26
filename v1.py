@@ -19,9 +19,9 @@ OPTIMIZERS = {
     "sgd-001-0.9": lambda: optimizers.SGD(lr=0.001, momentum=0.9),
     "sgd-0001-0.9": lambda: optimizers.SGD(lr=0.0001, momentum=0.9),
     "sgd-01-0.9-nesterov": lambda: optimizers.SGD(lr=0.01, momentum=0.9, nesterov=True),
-    "sgd-005-0.9-nesterov": lambda: optimizers.SGD(lr=0.005, momentum=0.9, nesterov=True),
     "sgd-001-0.9-nesterov": lambda: optimizers.SGD(lr=0.001, momentum=0.9, nesterov=True),
     "sgd-0001-0.9-nesterov": lambda: optimizers.SGD(lr=0.0001, momentum=0.9, nesterov=True),
+    "sgd-00001-0.9-nesterov": lambda: optimizers.SGD(lr=0.00001, momentum=0.9, nesterov=True),
     "adam": lambda: "adam",
     "nadam": lambda: "nadam",
 }
