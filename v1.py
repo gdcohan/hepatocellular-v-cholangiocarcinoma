@@ -189,7 +189,8 @@ def run(run_id=None, mode='normal', loaded_data=None, split_id=None, input_form=
         # return trained model
         return train(model_instance, training, validation, run_id, 'val_loss')
     elif mode == 'cross':
-        training, validation, test, holdout_test = loaded_data
+        # training, validation, test, holdout_test = loaded_data
+        training, validation, test = loaded_data
         model_instance = model(input_form, aux_size=training.features_size, hyperparameters=hyperparameters)
         return train(model_instance, training, validation, run_id, 'val_loss')
 
