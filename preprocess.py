@@ -7,7 +7,7 @@ import SimpleITK as sitk
 
 from config import config
 
-from filenames import IMAGE, SEGMENTATION, T1, T1POST, T2
+from filenames import IMAGE, SEGMENTATION, T1, T2
 
 def n4_bias_correction(image):
     import ants
@@ -57,51 +57,37 @@ def run(files, out, use_n4_bias=False, use_registration=False):
             print("working on {} {}".format(index, "-" * 40))
             t1 = row.to_frame().loc["path", T1, IMAGE][0]
             t1_seg = row.to_frame().loc["path", T1, SEGMENTATION][0]
-            t1_post = row.to_frame().loc["path", T1POST, IMAGE][0]
-            t1_post_seg = row.to_frame().loc["path", T1POST, SEGMENTATION][0]
             t2 = row.to_frame().loc["path", T2, IMAGE][0]
             t2_seg = row.to_frame().loc["path", T2, SEGMENTATION][0]
             print("""using files:
             t1: {}
             t1 seg: {}
-            t1_post: {}
-            t1_post seg: {}
             t2: {}
             t2 seg: {}
-            """.format(t1, t1_seg, t1_post, t1_post_seg, t2, t2_seg))
+            """.format(t1, t1_seg, t2, t2_seg))
 
             t1_nrrd, _ = nrrd.read(t1)
             t1_seg_nrrd, _ = nrrd.read(t1_seg)
-            t1_post_nrrd, _ = nrrd.read(t1_post)
-            t1_post_seg_nrrd, _ = nrrd.read(t1_post_seg)
             t2_nrrd, _ = nrrd.read(t2)
             t2_seg_nrrd, _ = nrrd.read(t2_seg)
             print("""START SHAPES
     t1: {}
     t1 seg: {}
-    t1_post: {}
-    t1_post seg: {}
     t2: {}
     t2 seg: {}
-""".format(t1_nrrd.shape, t1_seg_nrrd.shape, t1_post_nrrd.shape, t1_post_seg_nrrd.shape, t2_nrrd.shape, t2_seg_nrrd.shape))
+""".format(t1_nrrd.shape, t1_seg_nrrd.shape, t2_nrrd.shape, t2_seg_nrrd.shape))
 
             out_t1, out_t2 = preprocess_pack(t1_nrrd, [(t2_nrrd, t2_seg_nrrd)], use_n4_bias, use_registration)
-            out_t1, out_t1_post = preprocess_pack(t1_nrrd, [(t1_post_nrrd, t1_post_seg_nrrd)], use_n4_bias, use_registration)
-            out_t1_post_image, out_t1_post_seg = out_t1_post[0]
             out_t2_image, out_t2_seg = out_t2[0]
 
             print("""END SHAPES
     t1: {}
     t1 seg: {}
-    t1_post: {}
-    t1_post seg: {}
     t2: {}
     t2 seg: {}
-""".format(out_t1.shape, t1_seg_nrrd.shape, out_t1_post_image.shape, out_t1_post_seg.shape, out_t2_image.shape, out_t2_seg.shape))
+""".format(out_t1.shape, t1_seg_nrrd.shape, out_t2_image.shape, out_t2_seg.shape))
             nrrd.write(os.path.join(out, "{}-{}-{}".format(index, T1, IMAGE)), out_t1)
             nrrd.write(os.path.join(out, "{}-{}-{}".format(index, T1, SEGMENTATION)), t1_seg_nrrd)
-            nrrd.write(os.path.join(out, "{}-{}-{}".format(index, T1POST, IMAGE)), out_t1_post_image)
-            nrrd.write(os.path.join(out, "{}-{}-{}".format(index, T1POST, SEGMENTATION)), out_t1_post_seg)
             nrrd.write(os.path.join(out, "{}-{}-{}".format(index, T2, IMAGE)), out_t2_image)
             nrrd.write(os.path.join(out, "{}-{}-{}".format(index, T2, SEGMENTATION)), out_t2_seg)
 
