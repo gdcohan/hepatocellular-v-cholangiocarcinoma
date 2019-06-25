@@ -80,7 +80,7 @@ def filter_filenames(df):
     return df
 
 def features(df):
-    df = df[df.modality=="T1"][df.filename=="segMask_tumor.nrrd"][["accession", "patient", "volume", *list(clinical_feature_functions.keys())]]
+    df = df[df.modality=="T1POST"][df.filename=="segMask_tumor.nrrd"][["accession", "patient", "volume", *list(clinical_feature_functions.keys())]]
     df = df.set_index("accession")
     df = df.dropna()
     return df
