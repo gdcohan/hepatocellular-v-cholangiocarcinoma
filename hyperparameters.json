@@ -2,7 +2,8 @@
   "dropout": [0],
   "optimizer": [
     "sgd-001-0.9-nesterov",
-    "sgd-0001-0.9-nesterov"
+    "sgd-0001-0.9-nesterov",
+    "sgd-001-0.9"
   ],
   "deep-dense-top": [false]
 }
