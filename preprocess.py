@@ -101,5 +101,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--n4', action='store_true', help="use n4 bias correction")
     parser.add_argument('--registration', action='store_true', help="use registration")
+    parser.add_argument(
+        '--preprocess',
+        type=str,
+        default=config.PREPROCESS,
+        help='preprocess file')
+    parser.add_argument(
+        '--out',
+        type=str,
+        default=config.PREPROCESSED_DIR,
+        help='output')
     FLAGS, unparsed = parser.parse_known_args()
-    run(config.PREPROCESS, config.PREPROCESSED_DIR, FLAGS.n4, FLAGS.registration)
+    run(FLAGS.preprocess, FLAGS.out, FLAGS.n4, FLAGS.registration)

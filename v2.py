@@ -7,12 +7,13 @@ from keras.models import Sequential, Model
 from keras.layers import Dropout, Flatten, Dense, Input, concatenate
 from keras import backend as k
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler, TensorBoard, EarlyStopping
+from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l1_l2
 
 from config import config
 from data import data, INPUT_FORM_PARAMETERS
 
-MODEL_NAME = "v1"
+MODEL_NAME = "v2"
 
 OPTIMIZERS = {
     "sgd-01-0.9": lambda: optimizers.SGD(lr=0.01, momentum=0.9),
@@ -21,9 +22,17 @@ OPTIMIZERS = {
     "sgd-01-0.9-nesterov": lambda: optimizers.SGD(lr=0.01, momentum=0.9, nesterov=True),
     "sgd-001-0.9-nesterov": lambda: optimizers.SGD(lr=0.001, momentum=0.9, nesterov=True),
     "sgd-0001-0.9-nesterov": lambda: optimizers.SGD(lr=0.0001, momentum=0.9, nesterov=True),
+    "sgd-e6-0.9-nesterov": lambda: optimizers.SGD(lr=1e-6, momentum=0.9, nesterov=True),
     "adam": lambda: "adam",
     "nadam": lambda: "nadam",
 }
+
+def apply_layer_freeze(convnet, percent=0.0):
+    trainable_layers = [l for l in convnet.layers if len(l.trainable_weights) > 0]
+    number_to_freeze = int(percent * len(trainable_layers))
+    for i, l in enumerate(trainable_layers):
+        if i < number_to_freeze:
+            l.trainable = False
 
 def model(input_form="all", aux_size=0, hyperparameters=dict()):
     print("using the following hyperparameters: {}".format(hyperparameters))
@@ -40,6 +49,7 @@ def model(input_form="all", aux_size=0, hyperparameters=dict()):
     DROPOUT = hyperparameters.get("dropout", 0.5)
     OPTIMIZER = hyperparameters.get("optimizer", "sgd-0001-0.9")
     DEEP_DENSE_TOP = hyperparameters.get("deep-dense-top", True)
+    CONVNET_FREEZE_PERCENT = hyperparameters.get("convnet-freeze-percent", 0.0)
 
     #skip for now
     if parameters["t2"]:
@@ -50,6 +60,7 @@ def model(input_form="all", aux_size=0, hyperparameters=dict()):
         )
         for layer in convnet.layers:
             layer.name = "{}_t2".format(layer.name)
+        apply_layer_freeze(convnet, CONVNET_FREEZE_PERCENT)
         out = convnet.output
         out = Flatten()(out)
         inputs.append(convnet.input)
@@ -62,6 +73,7 @@ def model(input_form="all", aux_size=0, hyperparameters=dict()):
             include_top=False,
             input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3),
         )
+        apply_layer_freeze(convnet, CONVNET_FREEZE_PERCENT)
         out = convnet.output
         out = Flatten()(out)
         inputs.append(convnet.input)
@@ -73,14 +85,18 @@ def model(input_form="all", aux_size=0, hyperparameters=dict()):
         out = outputs[0]
 
     out = Dense(256, activation="relu", kernel_regularizer=l1_l2(l1=0.01, l2=0.01))(out)
+    out = BatchNormalization()(out)
 
     if DEEP_DENSE_TOP:
         out = Dropout(DROPOUT)(out)
         out = Dense(128, activation="relu", kernel_regularizer=l1_l2(l1=0.01, l2=0.01))(out)
+        out = BatchNormalization()(out)
         out = Dropout(DROPOUT)(out)
         out = Dense(64, activation="relu", kernel_regularizer=l1_l2(l1=0.01, l2=0.01))(out)
+        out = BatchNormalization()(out)
         out = Dropout(DROPOUT)(out)
         out = Dense(32, activation="relu", kernel_regularizer=l1_l2(l1=0.01, l2=0.01))(out)
+        out = BatchNormalization()(out)
         out = Dropout(DROPOUT)(out)
 
     if parameters["features"]:
@@ -89,6 +105,7 @@ def model(input_form="all", aux_size=0, hyperparameters=dict()):
         out = concatenate([out, aux_input])
 
     out = Dense(16, activation="relu", kernel_regularizer=l1_l2(l1=0.01, l2=0.01))(out)
+    out = BatchNormalization()(out)
     predictions = Dense(1, activation="sigmoid", kernel_regularizer=l1_l2(l1=0.01, l2=0.01))(out)
 
     # creating the final model
@@ -174,12 +191,12 @@ def run(run_id=None, mode='normal', loaded_data=None, split_id=None, input_form=
             training, validation, test = loaded_data
         model_instance = model(input_form, aux_size=training.features_size, hyperparameters=hyperparameters)
         # return trained model
-        return train(model_instance, training, validation, run_id, 'val_loss')
+        return train(model_instance, training, validation, run_id, 'val_acc')
     elif mode == 'cross':
         # training, validation, test, holdout_test = loaded_data
         training, validation, test = loaded_data
         model_instance = model(input_form, aux_size=training.features_size, hyperparameters=hyperparameters)
-        return train(model_instance, training, validation, run_id, 'val_loss')
+        return train(model_instance, training, validation, run_id, 'val_acc')
 
 
 if __name__ == '__main__':

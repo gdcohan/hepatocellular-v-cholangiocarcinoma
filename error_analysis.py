@@ -18,7 +18,6 @@ t1 seg: {}
 t2: {}
 t2 seg: {}"""
 
-#what is this?
 EQUALITY = """equal files:
 t1==t2: {}
 t1_seg==t2_seg: {}
@@ -61,7 +60,7 @@ def check(index, t1, t1_seg, t2, t2_seg, enhanced, enhanced_seg):
         t2_nrrd, _ = nrrd.read(t2)
         t2_seg_nrrd, _ = nrrd.read(t2_seg)
         if (t1_nrrd.shape != t1_seg_nrrd.shape) or (t2_nrrd.shape != t2_seg_nrrd.shape):
-            print()
+            print() #extra space
             print("accession:{}".format(index))
             print(FILES.format(t1, t1_seg, t2, t2_seg))
             print(SHAPES.format(t1_nrrd.shape, t1_seg_nrrd.shape, t2_nrrd.shape, t2_seg_nrrd.shape))
@@ -99,10 +98,8 @@ if __name__ == '__main__':
             t1_seg = row.to_frame().loc["path", T1, SEGMENTATION][0]
             t2 = row.to_frame().loc["path", T2, IMAGE][0]
             t2_seg = row.to_frame().loc["path", T2, SEGMENTATION][0]
-
             enhanced = row.to_frame().loc["path", T1, ENHANCED_IMAGE][0]
             enhanced_seg = row.to_frame().loc["path", T1, ENHANCED_SEGMENTATION][0]
-
             check(index, t1, t1_seg, t2, t2_seg, enhanced, enhanced_seg)
     f = pandas.read_pickle(post_files)
     for index, row in f.iterrows():
@@ -110,8 +107,6 @@ if __name__ == '__main__':
             t1_seg = row.to_frame().loc["path", T1, SEGMENTATION][0]
             t2 = row.to_frame().loc["path", T2, IMAGE][0]
             t2_seg = row.to_frame().loc["path", T2, SEGMENTATION][0]
-
             enhanced = row.to_frame().loc["path", T1, ENHANCED_IMAGE][0]
             enhanced_seg = row.to_frame().loc["path", T1, ENHANCED_SEGMENTATION][0]
-
             check(index, t1, t1_seg, t2, t2_seg, enhanced, enhanced_seg)

@@ -26,8 +26,6 @@ def clinical_features(feat, filename):
         return {}
     return { k: f(clinical) for k, f in clinical_feature_functions.items() }
 
-
-
 image_feature_functions = {
     "volume": calculate_volume,
 }
@@ -97,8 +95,7 @@ def normalize_column(df, column=""):
     df[column] = pandas.Series(x_scaled, index=df.index)
     return df
 
-# start calc run here
-def run(folder, features_files, out, save=True):
+def run(folder, features_files, out, save=True, nrrd_pickle="", features_pickle="", to_preprocess_pickle=""):
     nrrds = all_nrrd(folder)
     feat = all_features(features_files)
 
@@ -115,18 +112,17 @@ def run(folder, features_files, out, save=True):
     nrrd_features = normalize_column(nrrd_features, column="age")
     nrrd_features = normalize_column(nrrd_features, column="volume")
 
-    # patient, volume, outcome
     features_to_use = features(nrrd_features)
 
     to_preprocess = preprocessing(nrrd_features)
 
     if save:
         nrrd_features.to_csv(os.path.join(out, "nrrd-features.csv"))
-        nrrd_features.to_pickle(config.NRRD_FEATURES)
+        nrrd_features.to_pickle(nrrd_pickle)
         features_to_use.to_csv(os.path.join(out, "training-features.csv"))
-        features_to_use.to_pickle(config.FEATURES)
+        features_to_use.to_pickle(features_pickle)
         to_preprocess.to_csv(os.path.join(out, "preprocess.csv"))
-        to_preprocess.to_pickle(config.PREPROCESS)
+        to_preprocess.to_pickle(to_preprocess_pickle)
     else:
         print(to_preprocess.head())
         print(nrrd_features.head())
@@ -152,8 +148,23 @@ if __name__ == '__main__':
         default=config.FEATURES_DIR,
         help='output folder')
     parser.add_argument(
+        '--nrrd',
+        type=str,
+        default=config.NRRD_FEATURES,
+        help='nrrd features')
+    parser.add_argument(
+        '--pickle',
+        type=str,
+        default=config.FEATURES,
+        help='features pickle')
+    parser.add_argument(
+        '--preprocess',
+        type=str,
+        default=config.PREPROCESS,
+        help='preprocess pickle')
+    parser.add_argument(
         '--temp',
         action='store_true',
         help='do not save')
     FLAGS, unparsed = parser.parse_known_args()
-    run(FLAGS.folder, FLAGS.features, FLAGS.out, not FLAGS.temp)
+    run(FLAGS.folder, FLAGS.features, FLAGS.out, not FLAGS.temp, FLAGS.nrrd, FLAGS.pickle, FLAGS.preprocess)

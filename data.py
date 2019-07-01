@@ -261,8 +261,7 @@ SHAPES_OUTPUT = """
 SHAPES
     {}:"""
 
-def generate_from_features(df, input_form=config.INPUT_FORM, label_form="outcome", verbose=False):
-    source = config.PREPROCESSED_DIR
+def generate_from_features(df, input_form=config.INPUT_FORM, label_form="outcome", verbose=False, source=config.PREPROCESSED_DIR):
     parameters = INPUT_FORM_PARAMETERS[input_form]
 
     for index, row in tqdm(df.iterrows(), total=len(df)):
@@ -292,24 +291,67 @@ def generate_from_features(df, input_form=config.INPUT_FORM, label_form="outcome
             print(traceback.format_exc())
             continue
 
+
 def sort(validation_fraction=0.2, test_fraction=0.1, seed=None, label_form="outcome"):
     f = pandas.read_pickle(config.FEATURES)
+    train_fraction = 1 - validation_fraction - test_fraction
+
+    remaining = f.copy()
+
+    sort_dict = {
+        "train": train_fraction,
+        "validation": validation_fraction,
+        "test": test_fraction,
+    }
+
+    # calculate goal numbers for train/validation/test by label properties
+    labels = f[label_form].unique()
+    goal_sort = dict()
+    for l in labels:
+        label_fraction = len(remaining[remaining[label_form] == l])/len(remaining)
+        for s in ["train", "validation", "test"]:
+            goal_sort[(l, s)] = int(len(remaining) * label_fraction * sort_dict[s])
 
     all_train = list()
     all_validation = list()
     all_test = list()
+    sorted_dict = {
+        "train": all_train,
+        "validation": all_validation,
+        "test": all_test,
+    }
 
-    for label in f[label_form].unique():
-        label_set = f[f[label_form] == label]
+    # get preassigned sorts
+    train = f[f["sort"] == "train"]
+    validation = f[f["sort"] == "validation"]
+    test = f[f["sort"] == "test"]
+    presort_dict = {
+        "train": train,
+        "validation": validation,
+        "test": test,
+    }
+    # recalculate goals based on preassigned sorts
+    for s in ["train", "validation", "test"]:
+        presorted = presort_dict[s]
+        for l in labels:
+            goal_sort[(l, s)] = max(0, goal_sort[(l, s)] - len(presorted[presorted[label_form] == l]))
+    # add preassigned sorts and remove from lesions to sort
+    all_train.append(train)
+    all_validation.append(validation)
+    all_test.append(test)
+    remaining = remaining.drop(train.index)
+    remaining = remaining.drop(validation.index)
+    remaining = remaining.drop(test.index)
 
-        validation_label_set = label_set.sample(frac=validation_fraction, random_state=(int(seed) % 2 ** 32))
-        label_set = label_set.drop(validation_label_set.index)
-        test_label_set = label_set.sample(frac=(test_fraction/(1-validation_fraction)), random_state=(int(seed) % 2 ** 32))
-        label_set = label_set.drop(test_label_set.index)
-
-        all_train.append(label_set)
-        all_validation.append(validation_label_set)
-        all_test.append(test_label_set)
+    # sort remaining lesions
+    for l in labels:
+        for s in ["train", "validation", "test"]:
+            label_set = remaining[remaining[label_form] == l]
+            label_set = label_set.sample(n = min(goal_sort[(l, s)], len(label_set)), random_state=(int(seed) % 2 ** 32))
+            remaining = remaining.drop(label_set.index)
+            sorted_dict[s].append(label_set)
+    # append any left over
+    all_train.append(remaining)
 
     train = pandas.concat(all_train)
     validation = pandas.concat(all_validation)

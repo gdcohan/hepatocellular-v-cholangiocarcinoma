@@ -1,5 +1,5 @@
 from config import config
-from data import data, xdata
+from data import data, xdata, load_from_features
 from keras.models import load_model
 from keras import backend as K
 import math
@@ -19,6 +19,39 @@ def load(result):
 def xload(result):
     path = "{}/models/{}-{}.h5".format(config.OUTPUT, result.run_id, result.model)
     return load_model(path)
+
+def stacked_single(uuids=[], pickle="", source=""):
+    results = [ Result.query.filter(Result.uuid == uuid).first() for uuid in uuids ]
+    modalities = dict()
+    for result in results:
+        if result.input_form in modalities:
+            continue
+        features = pandas.read_pickle(pickle)
+        dataset = load_from_features(
+            features,
+            label_form=result.label_form,
+            input_form=result.input_form,
+            shuffle=False,
+            augment=False,
+            source=source,
+        )
+        modalities[result.input_form] = dataset
+    # generate labels
+    labels = list()
+    first = list(modalities.values())[0]
+    for _ in range(math.ceil(len(first)/config.BATCH_SIZE)):
+        labels += first.next()[1].tolist()
+    first.reset()
+    # generate predictions
+    predictions = list()
+    for result in results:
+        model = load(result)
+        dataset = modalities[result.input_form]
+        predictions.append(model.predict_generator(dataset, steps=math.ceil(len(dataset)/config.BATCH_SIZE)).flatten())
+        dataset.reset()
+        K.clear_session()
+        del model
+    return predictions, labels
 
 def stacked_data(
         uuids=[],
