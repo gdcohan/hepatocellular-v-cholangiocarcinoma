@@ -81,7 +81,7 @@ def stacked_data(
                 seed=UUID(result.split_uuid),
                 input_form=result.input_form,
                 label_form=result.label_form,
-                train_shuffle=True,
+                train_shuffle=False,
                 validation_shuffle=False,
                 train_augment=False,
                 validation_augment=False,
