@@ -28,7 +28,7 @@ clinical_feature_functions = {
     "outcome": lambda f: "malignant" if f["Malignancy-binary"] == "1" else "benign",
     "age": lambda f: int(f["Age"]),
     #"sex": lambda f: 1 if f["Sex"] == "M" else 0,
-    "ca125": lambda f: int(f["CA125"]),
+    "ca125": lambda f: float(f["CA125"]),
     "isca125": lambda f: int(f["IsCA125"]),
     "menopause": lambda f: int(f["Menopause"]),
     "ismenopause": lambda f: int(f["IsMenopause"]),
