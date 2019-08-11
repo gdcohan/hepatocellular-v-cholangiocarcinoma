@@ -12,10 +12,28 @@ from config import config
 from filenames import ACCEPTED_FILENAMES
 from segmentation import calculate_volume
 
+#Pre/Post, 0 = n/a
+#0
+#Pre = 1
+#Post = 2
+
+#Mixed, Solid, Cystic, 0 = n/a
+#0
+#Mixed = 1
+#Solid = 2
+#Cystic = 3
+
+
 clinical_feature_functions = {
     "outcome": lambda f: "malignant" if f["Malignancy-binary"] == "1" else "benign",
     "age": lambda f: int(f["Age"]),
     #"sex": lambda f: 1 if f["Sex"] == "M" else 0,
+    "ca125": lambda f: int(f["CA125"]),
+    "isca125": lambda f: int(f["IsCA125"]),
+    "menopause": lambda f: int(f["Menopause"]),
+    "ismenopause": lambda f: int(f["IsMenopause"]),
+    "scm": lambda f: int(f["SCM"]),
+    "isscm": lambda f: int(f["IsSCM"]),
     "sort": lambda f: f["sort"],
 }
 
@@ -112,6 +130,7 @@ def run(folder, features_files, out, save=True, nrrd_pickle="", features_pickle=
 
     nrrd_features = normalize_column(nrrd_features, column="age")
     nrrd_features = normalize_column(nrrd_features, column="volume")
+    nrrd_features = normalize_column(nrrd_features, column="ca125")
 
     features_to_use = features(nrrd_features)
 

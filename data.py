@@ -22,6 +22,12 @@ from filenames import IMAGE, SEGMENTATION, T1, T2
 clinical_features = [
     "age",
     "volume",
+    "ca125",
+    "isca125",
+    "menopause",
+    "ismenopause",
+    "scm",
+    "isscm"
 ]
 
 def all_input(t1, t2, features, labels):
