@@ -10,14 +10,15 @@ def n4_bias_correction(image):
     corrected = ants.n4_bias_field_correction(as_ants)
     return corrected.numpy()
 
-patho = '/media/user1/my4TB/robin/ovarian/ovarian_data/test'
+patho = '/media/user1/my4TB/robin/ovarian/ovarian_data/raw1'
 baseDir = os.path.normpath(patho)
 files = glob(baseDir + '/*/T1POST/imagingVolume-resampled.nii')
 
 for file in files:
     filePath, fileName = os.path.split(file)
     a = filePath.split('/')
-    print(a[7])
+
+    print('starting with file ' + file)
 
     startPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/normalized/'
     nePath = startPath + a[8]
