@@ -3,6 +3,7 @@ import os
 from glob import glob
 import nibabel as nib
 import numpy as np
+from shutil import copyfile
 
 def n4_bias_correction(image):
     import ants
@@ -10,9 +11,10 @@ def n4_bias_correction(image):
     corrected = ants.n4_bias_field_correction(as_ants)
     return corrected.numpy()
 
-patho = '/media/user1/my4TB/robin/ovarian/ovarian_data/raw1'
+patho = '/media/user1/my4TB/robin/ovarian/ovarian_data/test'
 baseDir = os.path.normpath(patho)
 files = glob(baseDir + '/*/T1POST/imagingVolume-resampled.nii')
+labels = glob(baseDir + '/*/T1POST/segMask_tumor-resampled.nii')
 
 for file in files:
     filePath, fileName = os.path.split(file)
@@ -44,3 +46,18 @@ for file in files:
     new_img = nib.Nifti1Image(img, n1_affine, n1_header)
     nib.save(new_img, newPath)
     print('finished with file ' + file)
+
+for label in labels:
+    filePath, fileName = os.path.split(label)
+    a = filePath.split('/')
+
+    print('starting with mask ' + file)
+
+    startPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/normalized/'
+    nePath = startPath + a[8]
+    neePath = nePath + '/T1POST'
+    newPath = neePath + '/' + fileName
+
+    copyfile(label, newPath)
+
+    print('finished moving mask ' + file)
