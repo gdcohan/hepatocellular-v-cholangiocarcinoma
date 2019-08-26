@@ -19,7 +19,7 @@ for file in files:
     a = filePath.split('\\')
 
     startPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/normalized'
-    nePath = startPath + a[5]
+    nePath = startPath + a[7]
     neePath = nePath + '/T1POST'
     newPath = neePath + '/' + fileName
 
