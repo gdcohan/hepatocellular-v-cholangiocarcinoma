@@ -51,7 +51,7 @@ for label in labels:
     filePath, fileName = os.path.split(label)
     a = filePath.split('/')
 
-    print('starting with mask ' + file)
+    print('starting with mask ' + label)
 
     startPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/normalized/'
     nePath = startPath + a[8]
@@ -60,4 +60,4 @@ for label in labels:
 
     copyfile(label, newPath)
 
-    print('finished moving mask ' + file)
+    print('finished moving mask ' + label)
