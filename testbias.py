@@ -18,7 +18,7 @@ def stkbias(image, image_type=sitk.sitkFloat64):
     return output_image
 
 
-patho = 'C:/Users/Robin/Downloads/test2'
+patho = '/media/user1/my4TB/robin/ovarian/ovarian_data/test'
 baseDir = os.path.normpath(patho)
 files = glob(baseDir + '/*/T1POST/*.nii')
 
@@ -27,7 +27,7 @@ for file in files:
     a = filePath.split('\\')
 
 
-    startPath = 'C:/Users/Robin/Downloads/raw3/'
+    startPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/normalized'
     nePath = startPath + a[5]
     neePath = nePath + '/T1POST'
     newPath = neePath + '/' + fileName
