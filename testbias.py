@@ -16,6 +16,7 @@ files = glob(baseDir + '/*/T1POST/*.nii')
 
 for file in files:
     filePath, fileName = os.path.split(file)
+    print(filePath)
     a = filePath.split('\\')
 
     startPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/normalized'
