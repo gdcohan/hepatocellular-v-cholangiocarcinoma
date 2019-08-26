@@ -18,7 +18,7 @@ for file in files:
     filePath, fileName = os.path.split(file)
     print(filePath)
     print(fileName)
-    a = filePath.split('\\')
+    a = filePath.split('/')
     print(a)
 
     startPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/normalized'
