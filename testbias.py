@@ -19,8 +19,8 @@ for file in files:
     a = filePath.split('/')
     print(a[7])
 
-    startPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/normalized'
-    nePath = startPath + a[7]
+    startPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/normalized/'
+    nePath = startPath + a[8]
     neePath = nePath + '/T1POST'
     newPath = neePath + '/' + fileName
 
