@@ -10,6 +10,8 @@ def dice_score(seg_1, seg_2):
 
 
 def calc():
+    f = open('~/robin/ovarian/ovarian/dice.txt', 'a+')
+
     avgzzzj = 0
     avgrawzz = 0
     avgrawzj = 0
@@ -52,6 +54,8 @@ def calc():
     b = avgrawzj / count
     c = avgrawzz / count
 
-    print('zz-zj: ' + str(a))
-    print('raw-zj: ' + str(b))
-    print('raw-zz: ' + str(c))
+    f.write('zz-zj: ' + str(a) + '\n')
+    f.write('raw-zj: ' + str(b) + '\n')
+    f.write('raw-zz: ' + str(c) + '\n')
+
+    f.close()
