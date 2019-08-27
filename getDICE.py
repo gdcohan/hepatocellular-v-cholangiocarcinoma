@@ -59,3 +59,5 @@ def calc():
     f.write('raw-zz: ' + str(c) + '\n')
 
     f.close()
+
+calc()
