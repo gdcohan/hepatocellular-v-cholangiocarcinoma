@@ -26,7 +26,7 @@ def calc():
 
         zzstartPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/zz/'
         zznePath = zzstartPath + '/' + a[8]
-        zzzPathFile = zzstartPath + '/T1POST' + fileName
+        zzzPathFile = zznePath + '/T1POST' + fileName
 
         rawstartPath = '/media/user1/my4TB/robin/ovarian/ovarian_data/raw/'
         rawnePath = rawstartPath + '/' + a[8]
