@@ -10,7 +10,7 @@ def dice_score(seg_1, seg_2):
 
 
 def calc():
-    f = open('~/robin/ovarian/ovarian/dice.txt', 'a+')
+    f = open('/home/user1/robin/ovarian/ovarian/dice.txt', 'a+')
 
     avgzzzj = 0
     avgrawzz = 0
