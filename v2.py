@@ -13,9 +13,6 @@ from keras.regularizers import l1_l2
 from config import config
 from data import data, INPUT_FORM_PARAMETERS
 
-import keras
-from classification_models.resnet import ResNet34, preprocess_input
-
 MODEL_NAME = "v2"
 
 OPTIMIZERS = {
@@ -56,7 +53,7 @@ def model(input_form="all", aux_size=0, hyperparameters=dict()):
 
     #skip for now
     if parameters["t2"]:
-        convnet = ResNet34(
+        convnet = applications.ResNet50(
             weights="imagenet",
             include_top=False,
             input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3),
@@ -71,7 +68,7 @@ def model(input_form="all", aux_size=0, hyperparameters=dict()):
 
     if parameters["t1"]:
         # init ResNet
-        convnet = ResNet34(
+        convnet = applications.ResNet50(
             weights="imagenet",
             include_top=False,
             input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3),
